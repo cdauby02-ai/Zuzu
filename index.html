@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Zuzu AI</title>
+  
+  <!-- PWA & Mobile Web App Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Zuzu AI">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0d0e15">
+  <meta name="description" content="Zuzu AI - Your Next-Gen Portable AI Companion">
+
+  <!-- Apple Touch Icons & App Icons -->
+  <link rel="apple-touch-icon" id="apple-touch-icon" href="">
+  <link rel="icon" type="image/svg+xml" id="favicon-icon" href="">
+
+  <!-- External CDNs: Tailwind CSS, FontAwesome, Marked.js, Highlight.js -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/tokyo-night-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
+  <!-- Tailwind Configuration -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            zuzu: {
+              bg: '#0d0e15',
+              card: 'rgba(21, 23, 35, 0.75)',
+              border: 'rgba(255, 255, 255, 0.08)',
+              violet: '#8b5cf6',
+              cyan: '#06b6d4',
+              pink: '#ec4899',
+              dark: '#131520'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+          },
+          boxShadow: {
+            'glow-violet': '0 0 25px -5px rgba(139, 92, 246, 0.4)',
+            'glow-cyan': '0 0 25px -5px rgba(6, 182, 212, 0.4)',
+            'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom CSS for Standalone PWA feel, custom scrollbars, and glassmorphism -->
+  <style>
+    :root {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    body {
+      background-color: #0d0e15;
+      color: #f3f4f6;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    /* Standalone PWA padding optimizations for mobile notches */
+    @supports (padding-top: env(safe-area-inset-top)) {
+      .safe-top { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+      .safe-bottom { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+    }
+
+    /* Glassmorphism utility */
+    .glass-panel {
+      background: rgba(21, 24, 38, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-input {
+      background: rgba(13, 14, 21, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+    }
+
+    .glass-input:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+      outline: none;
+    }
+
+    /* Glowing pulse animation */
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.03); }
+    }
+    .animate-glow { animation: pulseGlow 3s infinite ease-in-out; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(13, 14, 21, 0.5); }
+    ::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.6); }
+
+    /* Markdown Code Block Formatting */
+    .prose pre {
+      background: #161824 !important;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin: 0.75rem 0;
+      overflow-x: auto;
+    }
+    .prose code {
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: #38bdf8;
+    }
+    .prose p { margin-bottom: 0.75rem; line-height: 1.6; }
+    .prose ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+    .prose ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+  </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden select-none bg-[#0d0e15] text-slate-100">
+
+  <!-- APP CONTAINER -->
+  <div id="app" class="flex flex-col h-full w-full max-w-4xl mx-auto relative shadow-2xl overflow-hidden border-x border-slate-800/50">
+
+    <!-- HEADER BAR -->
+    <header class="glass-panel z-30 px-4 py-3 safe-top flex items-center justify-between border-b border-white/10 shrink-0">
+      <div class="flex items-center gap-3">
+        <!-- Logo Icon -->
+        <div class="relative w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 via-indigo-600 to-cyan-500 p-[2px] shadow-glow-violet cursor-pointer" onclick="switchTab('chat')">
+          <div class="w-full h-full bg-[#0d0e15] rounded-[10px] flex items-center justify-center">
+            <i class="fa-solid fa-bolt text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400 text-lg"></i>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-300 to-cyan-400">Zuzu AI</h1>
+            <span id="pwa-badge" class="hidden text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+              App
+            </span>
+          </div>
+          <p id="active-persona-subtitle" class="text-xs text-slate-400 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>Zuzu Assistant</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Header Quick Controls -->
+      <div class="flex items-center gap-2">
+        <!-- Add to Home Screen Button (Visible if prompt active or on iOS) -->
+        <button id="install-btn" onclick="openInstallModal()" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600/30 to-cyan-600/30 border border-violet-500/40 text-violet-200 hover:border-violet-400 transition-all shadow-sm">
+          <i class="fa-solid fa-mobile-screen-button text-cyan-400"></i>
+          <span class="hidden sm:inline">Add to Home Screen</span>
+          <span class="sm:hidden">Install</span>
+        </button>
+
+        <!-- New Chat / Clear Button -->
+        <button onclick="confirmClearChat()" title="New Chat" class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/80 text-slate-300 hover:text-white transition-all border border-white/5">
+          <i class="fa-solid fa-plus text-sm"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN VIEWPORT CONTAINER -->
+    <main class="flex-1 relative overflow-hidden flex flex-col bg-gradient-to-b from-[#0d0e15] via-[#121422] to-[#0d0e15]">
+      
+      <!-- TAB 1: CHAT VIEW -->
+      <div id="tab-chat" class="tab-content flex-1 flex flex-col h-full overflow-hidden">
+        
+        <!-- Chat Messages Container -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+          <!-- Empty State / Welcome Screen (Rendered via JS if messages are empty) -->
+        </div>
+
+        <!-- AI Typing Indicator -->
+        <div id="typing-indicator" class="hidden px-4 py-2 flex items-center gap-3 text-xs text-violet-300/80 animate-pulse">
+          <div class="w-7 h-7 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center">
+            <i class="fa-solid fa-sparkles text-violet-400 text-xs"></i>
+          </div>
+          <span class="font-medium">Zuzu is thinking...</span>
+          <div class="flex gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style="animation-delay: 0s;"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style="animation-delay: 0.15s;"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style="animation-delay: 0.3s;"></span>
+          </div>
+        </div>
+
+        <!-- Chat Input Dock -->
+        <div class="p-3 glass-panel border-t border-white/10 safe-bottom">
+          <!-- Prompt suggestions tray toggle -->
+          <div id="quick-tools-bar" class="flex items-center gap-2 mb-2 overflow-x-auto pb-1 no-scrollbar">
+            <button onclick="insertQuickPrompt('Summarize this key text into 3 clear bullet points:')" class="shrink-0 text-xs px-2.5 py-1 rounded-lg bg-violet-900/30 border border-violet-500/20 text-violet-300 hover:bg-violet-800/40 transition">
+              ⚡ Summarize
+            </button>
+            <button onclick="insertQuickPrompt('Debug and refactor this code for performance:')" class="shrink-0 text-xs px-2.5 py-1 rounded-lg bg-cyan-900/30 border border-cyan-500/20 text-cyan-300 hover:bg-cyan-800/40 transition">
+              💻 Debug Code
+            </button>
+            <button onclick="insertQuickPrompt('Explain this concept like I am 5 years old:')" class="shrink-0 text-xs px-2.5 py-1 rounded-lg bg-pink-900/30 border border-pink-500/20 text-pink-300 hover:bg-pink-800/40 transition">
+              🎓 ELI5
+            </button>
+            <button onclick="insertQuickPrompt('Brainstorm 5 innovative ideas for:')" class="shrink-0 text-xs px-2.5 py-1 rounded-lg bg-amber-900/30 border border-amber-500/20 text-amber-300 hover:bg-amber-800/40 transition">
+              💡 Brainstorm
+            </button>
+          </div>
+
+          <!-- Input Area -->
+          <div class="relative flex items-end gap-2 bg-[#0d0e15]/90 rounded-2xl p-2 border border-white/10 focus-within:border-violet-500/60 focus-within:ring-1 focus-within:ring-violet-500/50 transition-all">
+            <textarea id="user-input" rows="1" placeholder="Ask Zuzu AI anything..." class="flex-1 bg-transparent border-0 resize-none px-2 py-1.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none max-h-32 min-h-[38px]"></textarea>
+            
+            <!-- Send Button -->
+            <button id="send-btn" onclick="handleSendMessage()" class="w-10 h-10 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white flex items-center justify-center shrink-0 shadow-lg shadow-violet-600/30 transition-all active:scale-95 disabled:opacity-50">
+              <i class="fa-solid fa-paper-plane text-sm"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: PERSONA STUDIO -->
+      <div id="tab-personas" class="tab-content hidden flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="mb-2">
+          <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">Persona Studio</h2>
+          <p class="text-xs text-slate-400">Select or customize Zuzu's persona & core system behavior.</p>
+        </div>
+
+        <!-- Persona Cards Grid -->
+        <div id="personas-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Custom System Prompt Editor Card -->
+        <div class="glass-panel p-4 rounded-2xl border border-white/10 space-y-3 mt-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-violet-300 flex items-center gap-2">
+              <i class="fa-solid fa-sliders"></i> Active System Instructions
+            </h3>
+            <button onclick="saveCustomPersona()" class="text-xs px-3 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-medium transition">
+              Save Custom
+            </button>
+          </div>
+          <textarea id="custom-prompt-input" rows="3" class="w-full glass-input rounded-xl p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none" placeholder="Enter custom persona system instructions..."></textarea>
+        </div>
+      </div>
+
+      <!-- TAB 3: QUICK TOOLS -->
+      <div id="tab-tools" class="tab-content hidden flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="mb-2">
+          <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-400">AI Prompt Lab</h2>
+          <p class="text-xs text-slate-400">Pre-built high-efficiency prompt generators for instant productivity.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3">
+          <!-- Tool 1: Text Summarizer -->
+          <div onclick="launchToolPrompt('Summarizer')" class="glass-panel p-4 rounded-2xl border border-white/10 hover:border-violet-500/40 transition cursor-pointer flex items-start gap-3 group">
+            <div class="w-10 h-10 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center shrink-0 text-lg group-hover:scale-110 transition">
+              <i class="fa-solid fa-compress text-violet-400"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-sm text-slate-100 group-hover:text-violet-300 transition">Smart Summarizer</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Condense long articles, reports, or documents into key bullet points & takeaways.</p>
+            </div>
+            <i class="fa-solid fa-chevron-right text-xs text-slate-600 mt-2"></i>
+          </div>
+
+          <!-- Tool 2: Code Debugger & Optimizer -->
+          <div onclick="launchToolPrompt('Code Fixer')" class="glass-panel p-4 rounded-2xl border border-white/10 hover:border-cyan-500/40 transition cursor-pointer flex items-start gap-3 group">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 text-lg group-hover:scale-110 transition">
+              <i class="fa-solid fa-code text-cyan-400"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-sm text-slate-100 group-hover:text-cyan-300 transition">Code Refactor & Debugger</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Detect syntax errors, fix performance bottlenecks, and explain improvements.</p>
+            </div>
+            <i class="fa-solid fa-chevron-right text-xs text-slate-600 mt-2"></i>
+          </div>
+
+          <!-- Tool 3: Writing Polisher -->
+          <div onclick="launchToolPrompt('Writer')" class="glass-panel p-4 rounded-2xl border border-white/10 hover:border-pink-500/40 transition cursor-pointer flex items-start gap-3 group">
+            <div class="w-10 h-10 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center shrink-0 text-lg group-hover:scale-110 transition">
+              <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-sm text-slate-100 group-hover:text-pink-300 transition">Grammar & Tone Polisher</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Enhance emails, essays, or posts with professional flow and crisp vocabulary.</p>
+            </div>
+            <i class="fa-solid fa-chevron-right text-xs text-slate-600 mt-2"></i>
+          </div>
+
+          <!-- Tool 4: Creative Brainstormer -->
+          <div onclick="launchToolPrompt('Brainstormer')" class="glass-panel p-4 rounded-2xl border border-white/10 hover:border-amber-500/40 transition cursor-pointer flex items-start gap-3 group">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 text-lg group-hover:scale-110 transition">
+              <i class="fa-solid fa-lightbulb text-amber-400"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-sm text-slate-100 group-hover:text-amber-300 transition">Creative Idea Generator</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Generate startup ideas, story plots, content hooks, or project features.</p>
+            </div>
+            <i class="fa-solid fa-chevron-right text-xs text-slate-600 mt-2"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: SETTINGS VIEW -->
+      <div id="tab-settings" class="tab-content hidden flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="mb-2">
+          <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">Preferences & Storage</h2>
+          <p class="text-xs text-slate-400">Configure your Gemini API settings and app parameters.</p>
+        </div>
+
+        <!-- API Key Config -->
+        <div class="glass-panel p-4 rounded-2xl border border-white/10 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-key text-violet-400"></i> Gemini API Key
+            </label>
+            <span class="text-[10px] text-slate-400">Stored locally</span>
+          </div>
+          <div class="relative">
+            <input id="api-key-input" type="password" placeholder="Enter custom API Key (Optional)..." class="w-full glass-input rounded-xl px-3 py-2 text-xs text-slate-200 pr-10 focus:outline-none" onchange="saveSettings()">
+            <button onclick="toggleKeyVisibility()" class="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-200">
+              <i id="key-eye-icon" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400">If left blank, Zuzu uses default environment access.</p>
+        </div>
+
+        <!-- Model & Temperature -->
+        <div class="glass-panel p-4 rounded-2xl border border-white/10 space-y-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-slate-300">Model Selection</label>
+            <select id="model-select" class="w-full glass-input rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none bg-[#0d0e15]" onchange="saveSettings()">
+              <option value="gemini-3-flash-preview">Gemini 3 Flash (Fast & Intelligent - Recommended)</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <label class="font-semibold text-slate-300">Creativity (Temperature)</label>
+              <span id="temp-val" class="text-violet-400 font-mono">0.7</span>
+            </div>
+            <input id="temp-slider" type="range" min="0" max="1" step="0.1" value="0.7" class="w-full accent-violet-500 cursor-pointer" oninput="updateTempLabel(this.value)" onchange="saveSettings()">
+          </div>
+        </div>
+
+        <!-- PWA Installation Info Card -->
+        <div class="glass-panel p-4 rounded-2xl border border-white/10 space-y-2">
+          <h3 class="text-sm font-semibold text-cyan-300 flex items-center gap-2">
+            <i class="fa-solid fa-house-laptop"></i> Home Screen Web App
+          </h3>
+          <p class="text-xs text-slate-400">Install Zuzu AI directly to your phone's Home Screen for a native, full-screen experience with no browser bars.</p>
+          <button onclick="openInstallModal()" class="w-full py-2 mt-1 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 font-semibold text-xs hover:bg-cyan-600/30 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-arrow-down-to-bracket"></i> View Installation Guide
+          </button>
+        </div>
+
+        <!-- Data & Backup Tools -->
+        <div class="glass-panel p-4 rounded-2xl border border-white/10 space-y-3">
+          <h3 class="text-sm font-semibold text-slate-300">Chat History & Export</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="exportChatJSON()" class="py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-medium text-slate-200 border border-white/5 flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-file-code text-cyan-400"></i> Export JSON
+            </button>
+            <button onclick="exportChatMarkdown()" class="py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-medium text-slate-200 border border-white/5 flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-file-lines text-violet-400"></i> Export Markdown
+            </button>
+          </div>
+          <button onclick="confirmClearChat()" class="w-full py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-trash-can"></i> Clear All Chat History
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- BOTTOM NAVIGATION BAR -->
+    <nav class="glass-panel border-t border-white/10 safe-bottom z-30 shrink-0">
+      <div class="flex items-center justify-around py-2 px-1">
+        <button id="nav-chat" onclick="switchTab('chat')" class="flex flex-col items-center gap-1 px-3 py-1 rounded-xl text-violet-400 transition-all">
+          <i class="fa-solid fa-comments text-lg"></i>
+          <span class="text-[10px] font-medium">Chat</span>
+        </button>
+
+        <button id="nav-personas" onclick="switchTab('personas')" class="flex flex-col items-center gap-1 px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200 transition-all">
+          <i class="fa-solid fa-masks-theater text-lg"></i>
+          <span class="text-[10px] font-medium">Personas</span>
+        </button>
+
+        <button id="nav-tools" onclick="switchTab('tools')" class="flex flex-col items-center gap-1 px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200 transition-all">
+          <i class="fa-solid fa-cubes text-lg"></i>
+          <span class="text-[10px] font-medium">Tools</span>
+        </button>
+
+        <button id="nav-settings" onclick="switchTab('settings')" class="flex flex-col items-center gap-1 px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200 transition-all">
+          <i class="fa-solid fa-gear text-lg"></i>
+          <span class="text-[10px] font-medium">Settings</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- INSTALLATION / ADD TO HOME SCREEN MODAL -->
+    <div id="install-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4 transition-opacity">
+      <div class="glass-panel w-full max-w-md rounded-3xl p-6 border border-white/20 space-y-4 shadow-2xl relative animate-glow">
+        <button onclick="closeInstallModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-2">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-cyan-500 p-[2px] shadow-glow-violet">
+            <div class="w-full h-full bg-[#0d0e15] rounded-[14px] flex items-center justify-center">
+              <i class="fa-solid fa-bolt text-cyan-400 text-xl"></i>
+            </div>
+          </div>
+          <div>
+            <h3 class="font-bold text-lg text-slate-100">Install Zuzu AI</h3>
+            <p class="text-xs text-slate-400">Add to your Home Screen for full screen mode</p>
+          </div>
+        </div>
+
+        <!-- Android / Desktop Direct Install button section -->
+        <div id="pwa-native-install-section" class="hidden">
+          <button onclick="triggerPwaPrompt()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white font-semibold text-sm shadow-lg shadow-violet-500/30 hover:opacity-95 transition">
+            Install App Now
+          </button>
+        </div>
+
+        <!-- iOS Instructions Sheet -->
+        <div id="pwa-ios-instructions" class="space-y-3 bg-slate-900/60 p-4 rounded-2xl border border-white/5 text-xs text-slate-300">
+          <div class="font-semibold text-cyan-300 flex items-center gap-2">
+            <i class="fa-brands fa-apple text-sm"></i> Safari on iPhone & iPad:
+          </div>
+          <ol class="space-y-2 list-decimal list-inside text-slate-300">
+            <li class="leading-relaxed">
+              Tap the <span class="font-bold text-violet-300">Share</span> button <i class="fa-solid fa-share-nodes text-cyan-400 mx-1"></i> in Safari's bottom toolbar.
+            </li>
+            <li class="leading-relaxed">
+              Scroll down the menu and select <span class="font-bold text-violet-300">"Add to Home Screen"</span> <i class="fa-regular fa-square-plus text-cyan-400 mx-1"></i>.
+            </li>
+            <li class="leading-relaxed">
+              Tap <span class="font-bold text-emerald-400">Add</span> in the top right corner. Done!
+            </li>
+          </ol>
+        </div>
+
+        <button onclick="closeInstallModal()" class="w-full py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition">
+          Got It
+        </button>
+      </div>
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 hidden px-4 py-2 rounded-full glass-panel border border-violet-500/40 text-violet-200 text-xs font-medium shadow-2xl flex items-center gap-2">
+      <i class="fa-solid fa-circle-check text-cyan-400"></i>
+      <span id="toast-text">Action completed</span>
+    </div>
+
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    /* Global Application State */
+    const state = {
+      activeTab: 'chat',
+      messages: [],
+      apiKey: '',
+      model: 'gemini-3-flash-preview',
+      temperature: 0.7,
+      activePersonaId: 'zuzu-default',
+      customSystemPrompt: '',
+      isGenerating: false,
+      deferredPrompt: null
+    };
+
+    /* Persona Catalog */
+    const PERSONAS = {
+      'zuzu-default': {
+        id: 'zuzu-default',
+        name: 'Zuzu Assistant',
+        subtitle: 'Smart, helpful & versatile',
+        icon: 'fa-bolt',
+        color: 'from-violet-600 to-cyan-500',
+        systemPrompt: 'You are Zuzu AI, a warm, intelligent, and articulate personal AI assistant. You give crisp, nicely formatted markdown answers with modern formatting.'
+      },
+      'code-wizard': {
+        id: 'code-wizard',
+        name: 'Code Dev Pro',
+        subtitle: 'Full-stack software expert',
+        icon: 'fa-code',
+        color: 'from-cyan-600 to-blue-600',
+        systemPrompt: 'You are Zuzu Code Pro, an expert software architect. Provide clean, production-ready code blocks, concise comments, and performance insights.'
+      },
+      'creative-muse': {
+        id: 'creative-muse',
+        name: 'Creative Writer',
+        subtitle: 'Storyteller & copywriter',
+        icon: 'fa-wand-magic-sparkles',
+        color: 'from-pink-600 to-rose-500',
+        systemPrompt: 'You are Zuzu Creative Muse. Focus on vivid language, compelling narratives, captivating hooks, and imaginative tone.'
+      },
+      'cyberpunk': {
+        id: 'cyberpunk',
+        name: 'Cyber Hacker',
+        subtitle: 'Futuristic technical analyst',
+        icon: 'fa-terminal',
+        color: 'from-emerald-500 to-teal-600',
+        systemPrompt: 'You are Zuzu-X, a futuristic hacker AI terminal interface. Speak with technical precision, sleek cyberpunk flair, and sharp analytical clarity.'
+      },
+      'eli5-tutor': {
+        id: 'eli5-tutor',
+        name: 'Socratic Tutor',
+        subtitle: 'Explains complex topics simply',
+        icon: 'fa-graduation-cap',
+        color: 'from-amber-500 to-orange-600',
+        systemPrompt: 'You are Zuzu Tutor. Explain complex scientific, mathematical, or philosophical topics simply using metaphors suitable for beginners.'
+      }
+    };
+
+    window.onload = function() {
+      generateAndInjectPWAAssets();
+      loadStoredSettings();
+      renderPersonas();
+      renderChatMessages();
+      checkStandaloneMode();
+
+      // Setup textarea auto resize
+      const tx = document.getElementById('user-input');
+      tx.addEventListener('input', autoResizeTextarea);
+      tx.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSendMessage();
+        }
+      });
+    };
+
+    /* Dynamically generate SVG App Icon & Web Manifest Blob for Standalone Home Screen Installation */
+    function generateAndInjectPWAAssets() {
+      // Crisp SVG Icon
+      const svgIcon = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'>
+        <defs>
+          <linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'>
+            <stop offset='0%' stop-color='#8b5cf6'/>
+            <stop offset='100%' stop-color='#06b6d4'/>
+          </linearGradient>
+          <linearGradient id='bg' x1='0%' y1='0%' x2='100%' y2='100%'>
+            <stop offset='0%' stop-color='#0d0e15'/>
+            <stop offset='100%' stop-color='#1a1b2d'/>
+          </linearGradient>
+        </defs>
+        <rect width='512' height='512' rx='128' fill='url(#bg)'/>
+        <circle cx='256' cy='256' r='180' fill='none' stroke='url(#grad)' stroke-width='16' opacity='0.3'/>
+        <path d='M160 160h192l-144 192h144' stroke='url(#grad)' stroke-width='42' stroke-linecap='round' stroke-linejoin='round' fill='none'/>
+        <circle cx='352' cy='160' r='18' fill='#06b6d4'/>
+        <circle cx='160' cy='352' r='18' fill='#8b5cf6'/>
+      </svg>`;
+
+      const iconDataUrl = `data:image/svg+xml;base64,${btoa(svgIcon)}`;
+      document.getElementById('favicon-icon').href = iconDataUrl;
+      document.getElementById('apple-touch-icon').href = iconDataUrl;
+
+      // Manifest JSON Blob
+      const manifestObj = {
+        name: "Zuzu AI",
+        short_name: "Zuzu AI",
+        description: "Your Portable Next-Gen AI Companion",
+        start_url: "./",
+        display: "standalone",
+        background_color: "#0d0e15",
+        theme_color: "#0d0e15",
+        icons: [{
+          src: iconDataUrl,
+          sizes: "512x512",
+          type: "image/svg+xml",
+          purpose: "any maskable"
+        }]
+      };
+
+      const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/json' });
+      const manifestUrl = URL.createObjectURL(manifestBlob);
+      let manifestLink = document.querySelector('link[rel="manifest"]');
+      if (!manifestLink) {
+        manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        document.head.appendChild(manifestLink);
+      }
+      manifestLink.href = manifestUrl;
+    }
+
+    // Capture PWA install prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      state.deferredPrompt = e;
+      document.getElementById('pwa-native-install-section').classList.remove('hidden');
+      document.getElementById('install-btn').classList.add('animate-pulse');
+    });
+
+    function checkStandaloneMode() {
+      const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+      if (isStandalone) {
+        document.getElementById('pwa-badge').classList.remove('hidden');
+        document.getElementById('install-btn').classList.add('hidden');
+      }
+    }
+
+    function openInstallModal() {
+      document.getElementById('install-modal').classList.remove('hidden');
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        document.getElementById('pwa-ios-instructions').classList.remove('hidden');
+      }
+    }
+
+    function closeInstallModal() {
+      document.getElementById('install-modal').classList.add('hidden');
+    }
+
+    async function triggerPwaPrompt() {
+      if (state.deferredPrompt) {
+        state.deferredPrompt.prompt();
+        const { outcome } = await state.deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          showToast('Zuzu AI installed successfully!');
+        }
+        state.deferredPrompt = null;
+        closeInstallModal();
+      }
+    }
+
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+      // Update navbar highlighting
+      const navIds = ['chat', 'personas', 'tools', 'settings'];
+      navIds.forEach(id => {
+        const btn = document.getElementById(`nav-${id}`);
+        if (id === tabId) {
+          btn.className = 'flex flex-col items-center gap-1 px-3 py-1 rounded-xl text-violet-400 transition-all scale-105';
+        } else {
+          btn.className = 'flex flex-col items-center gap-1 px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200 transition-all';
+        }
+      });
+    }
+
+    /* Load & Save Local Storage Settings */
+    function loadStoredSettings() {
+      try {
+        const savedMessages = localStorage.getItem('zuzu_messages');
+        if (savedMessages) state.messages = JSON.parse(savedMessages);
+
+        const savedKey = localStorage.getItem('zuzu_api_key');
+        if (savedKey) {
+          state.apiKey = savedKey;
+          document.getElementById('api-key-input').value = savedKey;
+        }
+
+        const savedModel = localStorage.getItem('zuzu_model');
+        if (savedModel) {
+          state.model = savedModel;
+          document.getElementById('model-select').value = savedModel;
+        }
+
+        const savedTemp = localStorage.getItem('zuzu_temp');
+        if (savedTemp) {
+          state.temperature = parseFloat(savedTemp);
+          document.getElementById('temp-slider').value = savedTemp;
+          document.getElementById('temp-val').textContent = savedTemp;
+        }
+
+        const savedPersona = localStorage.getItem('zuzu_persona');
+        if (savedPersona && PERSONAS[savedPersona]) {
+          state.activePersonaId = savedPersona;
+        }
+        updatePersonaUI();
+      } catch (e) {
+        console.error("Error loading local storage:", e);
+      }
+    }
+
+    function saveSettings() {
+      state.apiKey = document.getElementById('api-key-input').value.trim();
+      state.model = document.getElementById('model-select').value;
+      state.temperature = parseFloat(document.getElementById('temp-slider').value);
+
+      localStorage.setItem('zuzu_api_key', state.apiKey);
+      localStorage.setItem('zuzu_model', state.model);
+      localStorage.setItem('zuzu_temp', state.temperature.toString());
+      localStorage.setItem('zuzu_persona', state.activePersonaId);
+
+      showToast("Settings saved!");
+    }
+
+    function updateTempLabel(val) {
+      document.getElementById('temp-val').textContent = val;
+    }
+
+    function toggleKeyVisibility() {
+      const input = document.getElementById('api-key-input');
+      const icon = document.getElementById('key-eye-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+      }
+    }
+
+    /* Persona Management */
+    function renderPersonas() {
+      const container = document.getElementById('personas-list');
+      container.innerHTML = '';
+
+      Object.values(PERSONAS).forEach(p => {
+        const isActive = state.activePersonaId === p.id;
+        const card = document.createElement('div');
+        card.className = `glass-panel p-4 rounded-2xl border transition cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+          isActive ? 'border-violet-500 bg-violet-950/20 shadow-glow-violet' : 'border-white/10 hover:border-white/20'
+        }`;
+        card.onclick = () => selectPersona(p.id);
+
+        card.innerHTML = `
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center text-white shrink-0 shadow-md">
+              <i class="fa-solid ${p.icon} text-sm"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-slate-100">${p.name}</h3>
+              <p class="text-xs text-slate-400 mt-0.5">${p.subtitle}</p>
+            </div>
+          </div>
+          ${isActive ? '<span class="absolute top-3 right-3 text-xs text-cyan-400"><i class="fa-solid fa-circle-check"></i> Active</span>' : ''}
+        `;
+        container.appendChild(card);
+      });
+
+      // Update custom system prompt box
+      const currentPersona = PERSONAS[state.activePersonaId];
+      document.getElementById('custom-prompt-input').value = currentPersona ? currentPersona.systemPrompt : '';
+    }
+
+    function selectPersona(id) {
+      if (PERSONAS[id]) {
+        state.activePersonaId = id;
+        localStorage.setItem('zuzu_persona', id);
+        renderPersonas();
+        updatePersonaUI();
+        showToast(`Switched to ${PERSONAS[id].name}`);
+      }
+    }
+
+    function updatePersonaUI() {
+      const p = PERSONAS[state.activePersonaId] || PERSONAS['zuzu-default'];
+      document.getElementById('active-persona-subtitle').innerHTML = `
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>${p.name}</span>
+      `;
+    }
+
+    function saveCustomPersona() {
+      const text = document.getElementById('custom-prompt-input').value.trim();
+      if (text) {
+        PERSONAS[state.activePersonaId].systemPrompt = text;
+        showToast("Custom instructions updated!");
+      }
+    }
+
+    async function handleSendMessage() {
+      if (state.isGenerating) return;
+
+      const inputEl = document.getElementById('user-input');
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      // Add user message to history
+      const userMsg = { role: 'user', text, timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
+      state.messages.push(userMsg);
+      saveMessagesLocally();
+
+      inputEl.value = '';
+      autoResizeTextarea();
+      renderChatMessages();
+
+      // Show typing indicator
+      state.isGenerating = true;
+      document.getElementById('typing-indicator').classList.remove('hidden');
+      scrollToBottom();
+
+      try {
+        const responseText = await callGeminiAPI(text);
+        
+        // Add AI response to history
+        const aiMsg = { 
+          role: 'model', 
+          text: responseText, 
+          persona: PERSONAS[state.activePersonaId]?.name || 'Zuzu AI',
+          timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
+        };
+        state.messages.push(aiMsg);
+        saveMessagesLocally();
+
+      } catch (err) {
+        console.error(err);
+        const errorMsg = { 
+          role: 'model', 
+          text: `⚠️ **Connection Error:** ${err.message || 'Unable to reach Gemini service. Please check your API key or connection.'}`, 
+          timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
+        };
+        state.messages.push(errorMsg);
+      } finally {
+        state.isGenerating = false;
+        document.getElementById('typing-indicator').classList.add('hidden');
+        renderChatMessages();
+      }
+    }
+
+    /* Direct Gemini REST API Integration with Exponential Backoff */
+    async function callGeminiAPI(userQuery) {
+      const apiKey = state.apiKey || "";
+      const model = state.model || "gemini-3-flash-preview";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+      const activePersona = PERSONAS[state.activePersonaId] || PERSONAS['zuzu-default'];
+      const systemInstructionText = activePersona.systemPrompt;
+
+      // Format last 10 messages for context
+      const formattedContents = state.messages.slice(-10).map(m => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }]
+      }));
+
+      const payload = {
+        contents: formattedContents,
+        systemInstruction: {
+          parts: [{ text: systemInstructionText }]
+        },
+        generationConfig: {
+          temperature: state.temperature
+        }
+      };
+
+      let retries = 3;
+      let delay = 1000;
+
+      while (retries > 0) {
+        try {
+          const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error?.message || `HTTP ${res.status}`);
+          }
+
+          const result = await res.json();
+          const candidate = result.candidates?.[0];
+          if (candidate && candidate.content?.parts?.[0]?.text) {
+            return candidate.content.parts[0].text;
+          } else {
+            throw new Error("No text response generated by Gemini model.");
+          }
+        } catch (error) {
+          retries--;
+          if (retries === 0) throw error;
+          await new Promise(r => setTimeout(r, delay));
+          delay *= 2;
+        }
+      }
+    }
+
+    function renderChatMessages() {
+      const container = document.getElementById('chat-messages');
+      container.innerHTML = '';
+
+      if (state.messages.length === 0) {
+        container.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 my-auto">
+            <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-violet-600 to-cyan-500 p-[2px] shadow-glow-violet animate-glow">
+              <div class="w-full h-full bg-[#0d0e15] rounded-[22px] flex items-center justify-center">
+                <i class="fa-solid fa-bolt text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400 text-2xl"></i>
+              </div>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-slate-100">Welcome to Zuzu AI</h2>
+              <p class="text-xs text-slate-400 max-w-xs mt-1">Your high-speed personal assistant. Type a query below or select a quick tool!</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 w-full max-w-xs pt-2">
+              <button onclick="insertQuickPrompt('What are 3 interesting facts about black holes?')" class="p-2.5 rounded-xl glass-panel border border-white/5 text-xs text-slate-300 hover:border-violet-500/40 text-left transition">
+                🌌 Black hole facts
+              </button>
+              <button onclick="insertQuickPrompt('Write a clean JavaScript function to debounce an event handler.')" class="p-2.5 rounded-xl glass-panel border border-white/5 text-xs text-slate-300 hover:border-cyan-500/40 text-left transition">
+                ⚡ JS Debounce code
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      state.messages.forEach((msg, idx) => {
+        const isUser = msg.role === 'user';
+        const msgWrapper = document.createElement('div');
+        msgWrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`;
+
+        const parsedContent = isUser ? escapeHtml(msg.text) : marked.parse(msg.text);
+
+        msgWrapper.innerHTML = `
+          <div class="max-w-[88%] sm:max-w-[80%] rounded-2xl p-3.5 relative ${
+            isUser 
+              ? 'bg-gradient-to-br from-violet-600/90 to-indigo-700/90 text-white rounded-br-xs shadow-lg shadow-violet-900/20 border border-violet-400/20' 
+              : 'glass-panel text-slate-200 rounded-bl-xs border border-white/10 shadow-md'
+          }">
+            <!-- Header/Avatar for AI -->
+            ${!isUser ? `
+              <div class="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-white/5 text-xs text-violet-300">
+                <span class="font-semibold flex items-center gap-1.5">
+                  <i class="fa-solid fa-bolt text-cyan-400 text-[11px]"></i> ${msg.persona || 'Zuzu AI'}
+                </span>
+                <span class="text-[10px] text-slate-500">${msg.timestamp || ''}</span>
+              </div>
+            ` : ''}
+
+            <!-- Message Body -->
+            <div class="prose text-xs sm:text-sm leading-relaxed">${parsedContent}</div>
+
+            <!-- Action Bar -->
+            <div class="flex items-center justify-end gap-2 mt-2 pt-1 border-t border-white/5 text-[10px] text-slate-400">
+              <button onclick="copyToClipboard(\`${escapeForAttribute(msg.text)}\`)" class="hover:text-cyan-300 transition flex items-center gap-1">
+                <i class="fa-regular fa-copy"></i> Copy
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(msgWrapper);
+      });
+
+      // Highlight syntax in code blocks
+      document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+      });
+
+      scrollToBottom();
+    }
+
+    /* UI Helper Utilities */
+    function insertQuickPrompt(promptText) {
+      switchTab('chat');
+      const inputEl = document.getElementById('user-input');
+      inputEl.value = promptText;
+      autoResizeTextarea();
+      inputEl.focus();
+    }
+
+    function launchToolPrompt(toolType) {
+      let prompt = '';
+      if (toolType === 'Summarizer') prompt = 'Summarize the following text into clear bullet points:\n\n[Paste text here]';
+      if (toolType === 'Code Fixer') prompt = 'Please review, debug, and optimize this code:\n\n```js\n// paste code here\n```';
+      if (toolType === 'Writer') prompt = 'Polish and improve the grammar, clarity, and tone of this draft:\n\n';
+      if (toolType === 'Brainstormer') prompt = 'Brainstorm 5 innovative, high-impact ideas for: ';
+      
+      insertQuickPrompt(prompt);
+    }
+
+    function autoResizeTextarea() {
+      const tx = document.getElementById('user-input');
+      tx.style.height = 'auto';
+      tx.style.height = (tx.scrollHeight) + 'px';
+    }
+
+    function scrollToBottom() {
+      const container = document.getElementById('chat-messages');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function saveMessagesLocally() {
+      localStorage.setItem('zuzu_messages', JSON.stringify(state.messages));
+    }
+
+    function confirmClearChat() {
+      if (confirm('Are you sure you want to clear your chat history?')) {
+        state.messages = [];
+        saveMessagesLocally();
+        renderChatMessages();
+        showToast('Chat history cleared');
+      }
+    }
+
+    function copyToClipboard(text) {
+      // Fallback copy execution for iFrame compatibility
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy', err);
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function exportChatJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.messages, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `zuzu_chat_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function exportChatMarkdown() {
+      let md = `# Zuzu AI Chat History\nExported on: ${new Date().toLocaleString()}\n\n`;
+      state.messages.forEach(m => {
+        md += `### ${m.role === 'user' ? 'User' : (m.persona || 'Zuzu AI')}\n${m.text}\n\n---\n\n`;
+      });
+      const dataStr = "data:text/markdown;charset=utf-8," + encodeURIComponent(md);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `zuzu_chat_${Date.now()}.md`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 2500);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function escapeForAttribute(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+    }
+  </script>
+</body>
+</html>
